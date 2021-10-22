@@ -40,7 +40,7 @@ func TestRoutineJSONability(t *testing.T) {
 	manager.addRoutine(*NewRoutine(0.5, "minute"))
 	manager.addRoutine(*NewRoutine(0.314, "hour"))
 	routines := manager.getRoutines()
-	expectedJson := `{"1":{"granularity":"second","frequency":2},"2":{"granularity":"minute","frequency":0.5},"3":{"granularity":"hour","frequency":0.314}}`
+	expectedJson := `{"1":{"granularity":"second","frequency":3},"2":{"granularity":"minute","frequency":0.5},"3":{"granularity":"hour","frequency":0.314}}`
 	resultJson, err := json.Marshal(routines)
 	if err != nil {
 		t.Errorf("Error marshalling JSON: %v", err)
