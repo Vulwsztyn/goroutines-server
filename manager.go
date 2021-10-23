@@ -34,10 +34,14 @@ func NewManager() *Manager {
 func (this *Manager) getRoutines() map[int]MyRoutine {
 	return this.routines
 }
-
-func (this *Manager) addRoutine(routine MyRoutine) {
+func (this *Manager) getRoutine(id int) map[int]MyRoutine {
+	return map[int]MyRoutine{id:this.routines[id]}
+}
+func (this *Manager) addRoutine(routine MyRoutine) int {
 	this.idMutex.Lock()
-	defer this.idMutex.Unlock()
-	this.routines[this.nextId] = routine
+	id := this.nextId
 	this.nextId++
+	this.idMutex.Unlock()
+	this.routines[id] = routine
+	return id
 }

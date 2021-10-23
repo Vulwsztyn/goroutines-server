@@ -1,18 +1,20 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 
 func main() {
 	manager := NewManager()
-	manager.addRoutine(*NewRoutine(2, "second"))
-	manager.addRoutine(*NewRoutine(0.5, "minute"))
-	manager.addRoutine(*NewRoutine(0.314, "hour"))
-	routines := manager.getRoutines()
-	fmt.Println(routines)
-	json, err := json.Marshal(routines)
-	fmt.Println(string(json), err)
+	server := NewServer(manager)
+	r := mux.NewRouter()
+	r.HandleFunc("/create-worker", server.CreateWorker).Methods("POST")
+	http.Handle("/", r)
+	fmt.Println("Starting up on 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
