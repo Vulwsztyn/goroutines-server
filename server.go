@@ -7,11 +7,12 @@ import (
 )
 
 type Server struct {
-	manager *Manager
+	routineRepository *RoutineRepository
+	asyncManager      *AsyncManager
 }
 
-func NewServer(manager *Manager) *Server {
-	return &Server{manager}
+func NewServer(routineRepository *RoutineRepository, asyncManager *AsyncManager) *Server {
+	return &Server{routineRepository, asyncManager}
 }
 
 func (this *Server) CreateWorker(w http.ResponseWriter, req *http.Request) {
@@ -29,9 +30,26 @@ func (this *Server) CreateWorker(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Granularity must be one of second, minute, hour", http.StatusBadRequest)
 		return
 	}
-	id := this.manager.addRoutine(routine)
-	response := this.manager.getRoutine(id)
-	json, err := json.Marshal(response)
+	this.asyncManager.runRoutine(&routine)
+	id := this.routineRepository.addRoutine(&routine)
+	response := this.routineRepository.getRoutine(id)
+	json, err := json.Marshal(map[int]MyRoutine{id: response})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(w, string(json))
+}
+
+func (this *Server) KillWorker(w http.ResponseWriter, req *http.Request) {
+	request := struct {
+		Id int
+	}{}
+	err := json.NewDecoder(req.Body).Decode(&request)
+	id := request.Id
+	routine := this.routineRepository.getRoutine(id)
+	this.asyncManager.killRoutine(routine)
+	json, err := json.Marshal(request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
