@@ -16,4 +16,4 @@ e.g.
 
 `curl -X POST -H "content-type: application/json" http://localhost:8080/get-entries -d '{"id": 1}'`
 
-`curl -X POST -H "content-type: application/json" http://localhost:8080/get-routines'`
+`curl -X POST -H "content-type: application/json" http://localhost:8080/get-workers'`

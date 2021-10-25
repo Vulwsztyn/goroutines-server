@@ -16,7 +16,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/create-worker", server.CreateWorker).Methods("POST")
 	r.HandleFunc("/kill-worker", server.KillWorker).Methods("POST")
-	r.HandleFunc("/get-routines", server.GetRoutines).Methods("POST")
+	r.HandleFunc("/get-workers", server.GetRoutines).Methods("POST")
 	r.HandleFunc("/get-entries", server.GetEntries).Methods("POST")
 	http.Handle("/", r)
 	fmt.Println("Starting up on 8080")
