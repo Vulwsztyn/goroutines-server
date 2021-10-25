@@ -5,6 +5,7 @@ import (
 	"math"
 	"testing"
 
+	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,8 +14,21 @@ const float64EqualityThreshold = 1e-9
 func almostEqual(a, b float64) bool {
 	return math.Abs(a-b) <= float64EqualityThreshold
 }
+
+type MockDb struct {
+	ctrl *gomock.Controller
+}
+
+func (this *MockDb) InsertTs(id int) {
+}
+func (this *MockDb) GetEntriesForRunner(runnerId int) []Entry {
+	return []Entry{}
+}
 func TestAddRoutine(t *testing.T) {
-	routineRepository := NewRoutineRepository()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockDb := MockDb{ctrl: ctrl}
+	routineRepository := NewRoutineRepository(&mockDb)
 	routineRepository.addRoutine(NewRoutine(2, "second"))
 	routineRepository.addRoutine(NewRoutine(0.5, "minute"))
 	routineRepository.addRoutine(NewRoutine(0.314, "hour"))
@@ -36,7 +50,10 @@ func TestAddRoutine(t *testing.T) {
 }
 
 func TestRoutineJSONability(t *testing.T) {
-	routineRepository := NewRoutineRepository()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockDb := MockDb{ctrl: ctrl}
+	routineRepository := NewRoutineRepository(&mockDb)
 	routineRepository.addRoutine(NewRoutine(2, "second"))
 	routineRepository.addRoutine(NewRoutine(0.5, "minute"))
 	routineRepository.addRoutine(NewRoutine(0.314, "hour"))

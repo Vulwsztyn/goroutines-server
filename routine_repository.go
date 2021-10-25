@@ -10,12 +10,11 @@ type MyRoutine struct {
 	Frequency   float64 `json:"frequency"`
 	Granularity string  `json:"granularity"`
 	Id          int     `json:"id"`
-	db *Db
+	db          DbInterface
 }
 
-func NewRoutine(frequency float64, granularity string, db *Db) *MyRoutine {
+func NewRoutine(frequency float64, granularity string) *MyRoutine {
 	return &MyRoutine{
-		killChannel: make(chan bool),
 		Frequency:   frequency,
 		Granularity: granularity,
 	}
@@ -26,18 +25,17 @@ func (this *MyRoutine) setKillChannel(killChannel chan bool) {
 }
 
 func (this *MyRoutine) run() {
-	this.db.insertTs(this.Id)
+	this.db.InsertTs(this.Id)
 }
-
 
 type RoutineRepository struct {
 	nextId   int
 	idMutex  *sync.Mutex
 	routines map[int]MyRoutine
-	db *Db
+	db       DbInterface
 }
 
-func NewRoutineRepository(db *Db) *RoutineRepository {
+func NewRoutineRepository(db DbInterface) *RoutineRepository {
 	this := RoutineRepository{}
 	this.nextId = 1
 	this.routines = make(map[int]MyRoutine)
@@ -65,7 +63,7 @@ func (this *RoutineRepository) addRoutine(routine *MyRoutine) int {
 
 func (this *RoutineRepository) removeRoutine(id int) {
 	_, ok := this.routines[id]
-    if ok {
-        delete(this.routines, id)
-    }
+	if ok {
+		delete(this.routines, id)
+	}
 }

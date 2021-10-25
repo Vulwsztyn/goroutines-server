@@ -65,7 +65,7 @@ func (this *Server) GetEntries(w http.ResponseWriter, req *http.Request) {
 	}{}
 	err := json.NewDecoder(req.Body).Decode(&request)
 	id := request.Id
-	entries := this.db.getTsForRunner(id)
+	entries := this.db.GetEntriesForRunner(id)
 	json, err := json.Marshal(entries)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -8,6 +8,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type DbInterface interface {
+	InsertTs(id int)
+	GetEntriesForRunner(id int) []Entry
+}
 type Db struct {
 	postgres *sql.DB
 }
@@ -25,7 +29,7 @@ func NewDb() *Db {
 	}
 	return &Db{postgres}
 }
-func (this *Db) insertTs(id int) {
+func (this *Db) InsertTs(id int) {
 	_, err := this.postgres.Exec("insert into timestamps (runner_id) values ($1)", id)
 	if err != nil {
 		panic(err)
@@ -38,7 +42,7 @@ type Entry struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (this *Db) getTsForRunner(id int) []Entry {
+func (this *Db) GetEntriesForRunner(id int) []Entry {
 	rows, err := this.postgres.Query("SELECT * FROM timestamps WHERE runner_id = $1", id)
 	if err != nil {
 		panic(err)
