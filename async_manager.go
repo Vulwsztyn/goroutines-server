@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -14,7 +13,6 @@ func NewAsyncManager() *AsyncManager {
 func (this *AsyncManager) runRoutine(routine *MyRoutine) {
 	killChannel := make(chan bool)
 	routine.setKillChannel(killChannel)
-	fmt.Println(routine.Id, time.Now().Format("2006-01-02 15:04:05"))
 	go func() {
 		sleepTime := routine.Frequency * (map[string]float64{
 			"second": 1,
@@ -27,7 +25,7 @@ func (this *AsyncManager) runRoutine(routine *MyRoutine) {
 			case <-killChannel:
 				return
 			default:
-				fmt.Println(routine.Id, time.Now().Format("2006-01-02 15:04:05"))
+				routine.run()
 				time.Sleep(time.Duration(sleepTime) * time.Second)
 			}
 		}
