@@ -9,10 +9,11 @@ import (
 type Server struct {
 	routineRepository *RoutineRepository
 	asyncManager      *AsyncManager
+	db                *Db
 }
 
-func NewServer(routineRepository *RoutineRepository, asyncManager *AsyncManager) *Server {
-	return &Server{routineRepository, asyncManager}
+func NewServer(routineRepository *RoutineRepository, asyncManager *AsyncManager, db *Db) *Server {
+	return &Server{routineRepository, asyncManager, db}
 }
 
 func (this *Server) CreateWorker(w http.ResponseWriter, req *http.Request) {
@@ -49,7 +50,33 @@ func (this *Server) KillWorker(w http.ResponseWriter, req *http.Request) {
 	id := request.Id
 	routine := this.routineRepository.getRoutine(id)
 	this.asyncManager.killRoutine(routine)
+	this.routineRepository.removeRoutine(id)
 	json, err := json.Marshal(request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(w, string(json))
+}
+
+func (this *Server) GetEntries(w http.ResponseWriter, req *http.Request) {
+	request := struct {
+		Id int
+	}{}
+	err := json.NewDecoder(req.Body).Decode(&request)
+	id := request.Id
+	entries := this.db.getTsForRunner(id)
+	json, err := json.Marshal(entries)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(w, string(json))
+}
+
+func (this *Server) GetRoutines(w http.ResponseWriter, req *http.Request) {
+	routines := this.routineRepository.getRoutines()
+	json, err := json.Marshal(routines)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
