@@ -5,6 +5,16 @@ import (
 	"sync"
 )
 
+type MyRoutineInterface interface {
+	init()
+	run()
+	kill()
+	getFrequency() float64
+	getGranularity() string
+	getKillChannel() chan bool
+}
+
+
 type MyRoutine struct {
 	killChannel chan bool
 	Frequency   float64 `json:"frequency"`
@@ -20,12 +30,36 @@ func NewRoutine(frequency float64, granularity string) *MyRoutine {
 	}
 }
 
-func (this *MyRoutine) setKillChannel(killChannel chan bool) {
-	this.killChannel = killChannel
+func (this *MyRoutine) init() {
+	channel := make(chan bool)
+	this.killChannel = channel
 }
 
 func (this *MyRoutine) run() {
 	this.db.InsertTs(this.Id)
+}
+
+func (this *MyRoutine) kill() {
+	this.killChannel <- true
+}
+
+func (this *MyRoutine) getFrequency() float64 {
+	return this.Frequency
+}
+
+func (this *MyRoutine) getGranularity() string {
+	return this.Granularity
+}
+
+func (this *MyRoutine) getKillChannel() chan bool {
+	return this.killChannel
+}
+
+type RoutineRepositoryInterface interface {
+	getRoutines() map[int]MyRoutine
+	getRoutine(id int) (MyRoutine, error)
+	addRoutine(routine *MyRoutine) int
+	removeRoutine(id int)
 }
 
 type RoutineRepository struct {
@@ -46,8 +80,13 @@ func NewRoutineRepository(db DbInterface) *RoutineRepository {
 func (this *RoutineRepository) getRoutines() map[int]MyRoutine {
 	return this.routines
 }
-func (this *RoutineRepository) getRoutine(id int) MyRoutine {
-	return this.routines[id]
+func (this *RoutineRepository) getRoutine(id int) (MyRoutine, error) {
+	if val, ok := this.routines[id]; ok {
+		return val, nil
+	} else {
+		return MyRoutine{}, fmt.Errorf("Routine with id %d not found", id)
+	}
+	
 }
 func (this *RoutineRepository) addRoutine(routine *MyRoutine) int {
 	this.idMutex.Lock()
