@@ -8,22 +8,31 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type SqlInterface interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+}
+
+type SqlConnectionInterface interface {
+	Open(driverName, dataSourceName string) (*sql.DB, error)
+}
+
 type DbInterface interface {
 	InsertTs(id int)
 	GetEntriesForRunner(id int) []Entry
 }
 type Db struct {
-	postgres *sql.DB
+	postgres SqlInterface
 }
 
-func NewDb() *Db {
+func NewDb(sqlConnection func(driverName, dataSourceName string) (SqlInterface, error)) *Db {
 	url := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		"root",
 		"password",
 		"postgres",
 		"5432",
 		"postgres")
-	postgres, err := sql.Open("postgres", url)
+	postgres, err := sqlConnection("postgres", url)
 	if err != nil {
 		panic(err)
 	}

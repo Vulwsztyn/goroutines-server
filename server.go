@@ -7,9 +7,9 @@ import (
 )
 
 type Server struct {
-	routineRepository *RoutineRepository
-	asyncManager      *AsyncManager
-	db                *Db
+	routineRepository RoutineRepositoryInterface
+	asyncManager      AsyncManagerInterface
+	db                DbInterface
 }
 
 func NewServer(routineRepository *RoutineRepository, asyncManager *AsyncManager, db *Db) *Server {
@@ -33,7 +33,11 @@ func (this *Server) CreateWorker(w http.ResponseWriter, req *http.Request) {
 	}
 	this.asyncManager.runRoutine(&routine)
 	id := this.routineRepository.addRoutine(&routine)
-	response := this.routineRepository.getRoutine(id)
+	response, err := this.routineRepository.getRoutine(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	json, err := json.Marshal(map[int]MyRoutine{id: response})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -48,12 +52,20 @@ func (this *Server) KillWorker(w http.ResponseWriter, req *http.Request) {
 	}{}
 	err := json.NewDecoder(req.Body).Decode(&request)
 	id := request.Id
-	routine := this.routineRepository.getRoutine(id)
-	this.asyncManager.killRoutine(routine)
+	fmt.Println("Killing worker with id:", id)
+	routine, err := this.routineRepository.getRoutine(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	fmt.Println("Routine:", routine)
+	this.asyncManager.killRoutine(&routine)
+	fmt.Println("Routine:", routine)
 	this.routineRepository.removeRoutine(id)
+
 	json, err := json.Marshal(request)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	fmt.Fprintln(w, string(json))

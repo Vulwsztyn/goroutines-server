@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"database/sql"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	db := NewDb()
+	db := NewDb(func(driverName, dataSourceName string) (SqlInterface, error) {
+		return sql.Open(driverName, dataSourceName)
+	})
 	routineRepository := NewRoutineRepository(db)
 	asyncManager := NewAsyncManager()
 	server := NewServer(routineRepository, asyncManager, db)

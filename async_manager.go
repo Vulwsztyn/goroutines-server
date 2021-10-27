@@ -4,25 +4,29 @@ import (
 	"time"
 )
 
+type AsyncManagerInterface interface {
+	runRoutine(routine MyRoutineInterface)
+	killRoutine(routine MyRoutineInterface)
+}
+
 type AsyncManager struct {
 }
 
 func NewAsyncManager() *AsyncManager {
 	return &AsyncManager{}
 }
-func (this *AsyncManager) runRoutine(routine *MyRoutine) {
-	killChannel := make(chan bool)
-	routine.setKillChannel(killChannel)
+func (this *AsyncManager) runRoutine(routine MyRoutineInterface) {
+	routine.init()
 	go func() {
-		sleepTime := routine.Frequency * (map[string]float64{
+		sleepTime := routine.getFrequency() * (map[string]float64{
 			"second": 1,
 			"minute": 60,
 			"hour":   3600,
-		}[routine.Granularity])
+		}[routine.getGranularity()])
 
 		for {
 			select {
-			case <-killChannel:
+			case <-routine.getKillChannel():
 				return
 			default:
 				routine.run()
@@ -31,6 +35,6 @@ func (this *AsyncManager) runRoutine(routine *MyRoutine) {
 		}
 	}()
 }
-func (this *AsyncManager) killRoutine(routine MyRoutine) {
-	routine.killChannel <- true
+func (this *AsyncManager) killRoutine(routine MyRoutineInterface) {
+	routine.kill()
 }
